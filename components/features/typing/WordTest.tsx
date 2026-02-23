@@ -71,6 +71,8 @@ export function WordTest({ config, onFinish }: WordTestProps) {
   const [countdown, setCountdown] = React.useState(3);
   const [isCountingDown, setIsCountingDown] = React.useState(true);
   const [currentWpm, setCurrentWpm] = React.useState(0);
+  const [currentCpm, setCurrentCpm] = React.useState(0);
+  const [totalKeystrokes, setTotalKeystrokes] = React.useState(0);
   const [streak, setStreak] = React.useState(0);
   const [maxStreak, setMaxStreak] = React.useState(0);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -105,14 +107,15 @@ export function WordTest({ config, onFinish }: WordTestProps) {
     return () => clearInterval(interval);
   }, [config.testType, config.timedDuration, startTime, isFinished, isCountingDown]);
 
-  // Live WPM calculation
+  // Live WPM + CPM calculation
   React.useEffect(() => {
     if (!startTime || isFinished || isCountingDown) return;
     const elapsed = (Date.now() - startTime) / 1000 / 60;
     if (elapsed > 0) {
       setCurrentWpm(Math.round((userInput.length / 5) / elapsed));
+      setCurrentCpm(Math.round(totalKeystrokes / elapsed));
     }
-  }, [userInput, startTime, isFinished, isCountingDown]);
+  }, [userInput, startTime, isFinished, isCountingDown, totalKeystrokes]);
 
   // Streak tracking
   React.useEffect(() => {
@@ -165,6 +168,7 @@ export function WordTest({ config, onFinish }: WordTestProps) {
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (isFinished || isCountingDown) return;
+    setTotalKeystrokes(k => k + 1);
     setUserInput(e.target.value);
   };
 
@@ -206,6 +210,8 @@ export function WordTest({ config, onFinish }: WordTestProps) {
     setIsCountingDown(true);
     setTimeRemaining(config.timedDuration || 0);
     setStartTime(null);
+    setTotalKeystrokes(0);
+    setCurrentCpm(0);
   };
 
   // Countdown overlay
@@ -224,10 +230,13 @@ export function WordTest({ config, onFinish }: WordTestProps) {
     <div className="space-y-4">
       {/* HUD */}
       {!isFinished && (
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              <span className="text-2xl font-bold text-foreground">{currentWpm}</span> WPM
+        <div className="flex items-center justify-between px-2 h-10">
+          <div className="flex items-center gap-6">
+            <div className="text-sm text-muted-foreground w-24">
+              <span className="text-2xl font-bold text-foreground tabular-nums inline-block w-12 text-right">{currentWpm}</span> WPM
+            </div>
+            <div className="text-sm text-muted-foreground w-28">
+              <span className="text-2xl font-bold text-foreground tabular-nums inline-block w-14 text-right">{currentCpm}</span> CPM
             </div>
             {streak >= 5 && (
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
@@ -237,7 +246,7 @@ export function WordTest({ config, onFinish }: WordTestProps) {
           </div>
           <div className="flex items-center gap-4">
             {config.testType === 'timed' && (
-              <div className={`text-2xl font-bold tabular-nums ${timeRemaining <= 10 ? 'text-red-500' : 'text-foreground'}`}>
+              <div className={`text-2xl font-bold tabular-nums w-16 text-right ${timeRemaining <= 10 ? 'text-red-500' : 'text-foreground'}`}>
                 {timeRemaining}초
               </div>
             )}

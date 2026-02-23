@@ -4,10 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { decomposeHangul } from "@/lib/hangul"
 
-// 2벌식 Korean keyboard layout — maps physical keys to Korean characters
-// Each key has: the base character and the shift character
 const KEYBOARD_ROWS = [
-  // Row 1: number row (not shown for compactness, focus on letter keys)
   [
     { key: 'q', ko: 'ㅂ', koShift: 'ㅃ', finger: 'pinky-l' },
     { key: 'w', ko: 'ㅈ', koShift: 'ㅉ', finger: 'ring-l' },
@@ -42,9 +39,7 @@ const KEYBOARD_ROWS = [
   ],
 ] as const;
 
-type FingerColor = string;
-
-const FINGER_COLORS: Record<string, FingerColor> = {
+const FINGER_COLORS: Record<string, string> = {
   'pinky-l': 'bg-rose-100 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800',
   'ring-l': 'bg-amber-100 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800',
   'middle-l': 'bg-emerald-100 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800',
@@ -55,7 +50,6 @@ const FINGER_COLORS: Record<string, FingerColor> = {
   'pinky-r': 'bg-rose-100 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800',
 };
 
-// Map a Korean jamo to the key(s) that produce it
 function findKeysForJamo(jamo: string): { key: string; needsShift: boolean }[] {
   const results: { key: string; needsShift: boolean }[] = [];
   for (const row of KEYBOARD_ROWS) {
@@ -70,7 +64,6 @@ function findKeysForJamo(jamo: string): { key: string; needsShift: boolean }[] {
   return results;
 }
 
-// Get the jamos needed for the next character
 function getNextJamos(nextChar: string): string[] {
   if (nextChar === ' ') return [' '];
   const decomposed = decomposeHangul(nextChar);
@@ -111,25 +104,29 @@ export function KoreanKeyboard({ nextChar, showFingerGuide = false, className }:
 
   return (
     <div className={cn("select-none", className)}>
-      {/* Next character hint */}
-      {nextChar && (
-        <div className="flex items-center justify-center gap-3 mb-3 text-sm">
-          <span className="text-muted-foreground">다음 글자:</span>
-          <span className="text-2xl font-bold text-primary">{nextChar}</span>
-          {nextJamos.length > 0 && nextJamos[0] !== ' ' && (
-            <span className="text-muted-foreground">
-              ({nextJamos.join(' + ')})
+      {/* Next character hint — fixed height so it never collapses/shifts */}
+      <div className="h-10 flex items-center justify-center gap-3 mb-3 text-sm">
+        {nextChar ? (
+          <>
+            <span className="text-muted-foreground">다음 글자:</span>
+            <span className="w-8 text-center text-2xl font-bold text-primary">{nextChar}</span>
+            <span className="w-28 text-muted-foreground text-center">
+              {nextJamos.length > 0 && nextJamos[0] !== ' ' ? `(${nextJamos.join(' + ')})` : '\u00A0'}
             </span>
-          )}
-          {needsShift && (
-            <span className="text-xs px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-              Shift
+            <span className="w-12 text-center">
+              {needsShift ? (
+                <span className="text-xs px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                  Shift
+                </span>
+              ) : '\u00A0'}
             </span>
-          )}
-        </div>
-      )}
+          </>
+        ) : (
+          <span className="text-muted-foreground">&nbsp;</span>
+        )}
+      </div>
 
-      {/* Keyboard layout */}
+      {/* Keyboard layout — no scale transforms, use box-shadow inset for highlight */}
       <div className="flex flex-col items-center gap-1">
         {KEYBOARD_ROWS.map((row, rowIndex) => (
           <div
@@ -143,11 +140,12 @@ export function KoreanKeyboard({ nextChar, showFingerGuide = false, className }:
                 <div
                   key={keyDef.key}
                   className={cn(
-                    "relative w-11 h-11 rounded-md border flex flex-col items-center justify-center transition-all duration-150",
+                    "w-11 h-11 rounded-md border-2 flex flex-col items-center justify-center transition-colors duration-100",
                     showFingerGuide && FINGER_COLORS[keyDef.finger],
                     !showFingerGuide && "bg-card border-border",
-                    isHighlighted && "ring-2 ring-primary bg-primary/10 dark:bg-primary/20 border-primary scale-110 shadow-md z-10",
-                    !isHighlighted && "opacity-60"
+                    isHighlighted
+                      ? "border-primary bg-primary/15 dark:bg-primary/25 shadow-[inset_0_0_0_1px_var(--primary)]"
+                      : "opacity-50"
                   )}
                 >
                   <span className={cn(
@@ -169,10 +167,11 @@ export function KoreanKeyboard({ nextChar, showFingerGuide = false, className }:
         <div className="flex gap-1 mt-0.5" style={{ paddingLeft: '40px' }}>
           <div
             className={cn(
-              "w-64 h-9 rounded-md border flex items-center justify-center transition-all duration-150",
-              "bg-card border-border",
-              highlightedKeys.has('space') && "ring-2 ring-primary bg-primary/10 border-primary",
-              !highlightedKeys.has('space') && "opacity-60"
+              "w-64 h-9 rounded-md border-2 flex items-center justify-center transition-colors duration-100",
+              "bg-card",
+              highlightedKeys.has('space')
+                ? "border-primary bg-primary/15 shadow-[inset_0_0_0_1px_var(--primary)]"
+                : "border-border opacity-50"
             )}
           >
             <span className="text-xs text-muted-foreground">Space</span>
