@@ -2,13 +2,13 @@
 
 import * as React from "react"
 import { AppNav } from "@/components/layout/AppNav"
+import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { db } from "@/lib/db"
 import { Target, ArrowRight } from "lucide-react"
 import Link from "next/link"
-import type { ErrorAnalysis } from "@/types"
 
 interface AggregatedErrors {
   spacing: number;
@@ -19,11 +19,11 @@ interface AggregatedErrors {
   sessionCount: number;
 }
 
-const ERROR_LABELS: Record<string, { label: string; description: string; packId: string }> = {
-  spacing: { label: "띄어쓰기", description: "띄어쓰기 오류가 많습니다. 문장 연습을 추천합니다.", packId: "formal" },
-  vowel: { label: "모음 혼동", description: "ㅐ/ㅔ, ㅓ/ㅗ 등 모음 구별 연습이 필요합니다.", packId: "common-100" },
-  batchim: { label: "받침 오류", description: "받침 입력 정확도를 높이기 위한 연습을 추천합니다.", packId: "proverbs" },
-  jamo: { label: "자모 오류", description: "초성/중성/종성 구별 연습이 필요합니다.", packId: "common-100" },
+const ERROR_LABELS: Record<string, { label: string; description: string; packId: string; testType: string }> = {
+  spacing: { label: "띄어쓰기", description: "띄어쓰기 오류가 많습니다. 문장 연습을 추천합니다.", packId: "formal", testType: "sentence" },
+  vowel: { label: "모음 혼동", description: "ㅐ/ㅔ, ㅓ/ㅗ 등 모음 구별 연습이 필요합니다.", packId: "common-100", testType: "timed" },
+  batchim: { label: "받침 오류", description: "받침 입력 정확도를 높이기 위한 연습을 추천합니다.", packId: "proverbs", testType: "sentence" },
+  jamo: { label: "자모 오류", description: "초성/중성/종성 구별 연습이 필요합니다.", packId: "common-100", testType: "word-count" },
 };
 
 export default function DrillsPage() {
@@ -84,6 +84,7 @@ export default function DrillsPage() {
     <div className="min-h-screen bg-background">
       <AppNav />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <Breadcrumb />
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">맞춤 드릴</h1>
           <p className="text-muted-foreground">
@@ -149,7 +150,7 @@ export default function DrillsPage() {
                             </div>
                             <p className="text-sm text-muted-foreground">{info.description}</p>
                           </div>
-                          <Link href={`/practice`}>
+                          <Link href={`/practice?pack=${info.packId}&type=${info.testType}&from=drill&drill=${info.label}`}>
                             <Button size="sm" className="gap-1 ml-4">
                               연습 <ArrowRight className="h-3 w-3" />
                             </Button>
@@ -170,25 +171,25 @@ export default function DrillsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Link href="/practice">
+                  <Link href="/practice?pack=common-100&type=timed&duration=60">
                     <Button variant="outline" className="w-full h-auto py-4 flex-col gap-1">
                       <span className="font-semibold">자주 쓰는 단어 100</span>
                       <span className="text-xs text-muted-foreground">기본 단어 익히기</span>
                     </Button>
                   </Link>
-                  <Link href="/practice">
+                  <Link href="/practice?pack=proverbs&type=sentence">
                     <Button variant="outline" className="w-full h-auto py-4 flex-col gap-1">
                       <span className="font-semibold">속담 타이핑</span>
                       <span className="text-xs text-muted-foreground">받침/모음 집중 연습</span>
                     </Button>
                   </Link>
-                  <Link href="/practice">
+                  <Link href="/practice?pack=tongue-twisters&type=timed&duration=60">
                     <Button variant="outline" className="w-full h-auto py-4 flex-col gap-1">
                       <span className="font-semibold">잰말 놀이</span>
                       <span className="text-xs text-muted-foreground">속도와 정확도 동시 훈련</span>
                     </Button>
                   </Link>
-                  <Link href="/practice">
+                  <Link href="/practice?pack=news&type=sentence">
                     <Button variant="outline" className="w-full h-auto py-4 flex-col gap-1">
                       <span className="font-semibold">뉴스 기사</span>
                       <span className="text-xs text-muted-foreground">고급 문장 연습</span>

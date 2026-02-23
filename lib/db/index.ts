@@ -11,8 +11,10 @@ export interface UserSettings {
 export interface Session {
     id?: number;
     mode: 'dictation' | 'speed' | 'drill';
+    testType?: string;
+    contentPackId?: string;
     textId?: string;
-    sentences: string[]; // The sentences practiced
+    sentences: string[];
     results: ScoreResult;
     errors: ErrorAnalysis;
     createdAt: Date;
@@ -92,6 +94,12 @@ export const db = {
         const db = await getDB();
         const sessions = await db.getAllFromIndex('sessions', 'by-date');
         return sessions.reverse().slice(0, limit);
+    },
+
+    async getAllSessions(): Promise<Session[]> {
+        const db = await getDB();
+        const sessions = await db.getAllFromIndex('sessions', 'by-date');
+        return sessions.reverse();
     },
 
     async saveContentPack(pack: ContentPack) {

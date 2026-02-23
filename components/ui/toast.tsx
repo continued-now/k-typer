@@ -37,18 +37,23 @@ export function Toaster() {
                 <div
                     key={toast.id}
                     className={cn(
-                        "min-w-[300px] rounded-md border p-4 shadow-lg transition-all animate-in slide-in-from-right-full",
-                        toast.type === 'success' && "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200",
-                        toast.type === 'error' && "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200",
-                        toast.type === 'default' && "bg-card border-border text-foreground"
+                        "min-w-[300px] rounded-md border p-4 shadow-lg transition-all",
+                        toast.type === 'success' && "bg-success/10 border-success/30 text-success",
+                        toast.type === 'error' && "bg-destructive/10 border-destructive/30 text-destructive",
+                        (!toast.type || toast.type === 'default') && "bg-card border-border text-foreground"
                     )}
+                    role="alert"
                 >
                     <div className="flex justify-between items-start">
                         <div>
                             {toast.title && <h4 className="font-semibold text-sm">{toast.title}</h4>}
                             {toast.description && <p className="text-sm opacity-90">{toast.description}</p>}
                         </div>
-                        <button onClick={() => removeToast(toast.id)} className="text-slate-400 hover:text-slate-600">
+                        <button
+                            onClick={() => removeToast(toast.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="닫기"
+                        >
                             <X size={16} />
                         </button>
                     </div>

@@ -4,7 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CONTENT_PACKS, type ContentPack, type ContentDifficulty } from "@/lib/data"
+import { CONTENT_PACKS, getContentPack, type ContentPack, type ContentDifficulty } from "@/lib/data"
 import { Clock, Hash, Infinity as InfinityIcon, BookOpen } from "lucide-react"
 
 export type TestType = 'timed' | 'word-count' | 'zen' | 'sentence';
@@ -20,12 +20,15 @@ export interface TestConfig {
 
 interface TestConfigProps {
   onStart: (config: TestConfig) => void;
+  preselectedPack?: string;
+  preselectedType?: string;
+  preselectedDuration?: number;
 }
 
 const DIFFICULTY_COLORS: Record<ContentDifficulty, string> = {
-  beginner: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-  intermediate: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200 dark:border-sky-800",
-  advanced: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+  beginner: "bg-success/10 text-success border-success/20",
+  intermediate: "bg-info/10 text-info border-info/20",
+  advanced: "bg-warning/10 text-warning border-warning/20",
 };
 
 const DIFFICULTY_LABELS: Record<ContentDifficulty, string> = {
@@ -34,12 +37,29 @@ const DIFFICULTY_LABELS: Record<ContentDifficulty, string> = {
   advanced: "고급",
 };
 
-export function TestConfigPanel({ onStart }: TestConfigProps) {
+const VALID_TEST_TYPES: TestType[] = ['timed', 'word-count', 'zen', 'sentence'];
+const VALID_DURATIONS: TimedDuration[] = [30, 60, 120];
+
+export function TestConfigPanel({ onStart, preselectedPack, preselectedType, preselectedDuration }: TestConfigProps) {
   const [selectedPack, setSelectedPack] = React.useState<ContentPack | null>(null);
   const [testType, setTestType] = React.useState<TestType>('timed');
   const [timedDuration, setTimedDuration] = React.useState<TimedDuration>(60);
   const [wordCountTarget, setWordCountTarget] = React.useState<WordCountTarget>(50);
   const [difficultyFilter, setDifficultyFilter] = React.useState<ContentDifficulty | 'all'>('all');
+
+  // Apply preselection from query params
+  React.useEffect(() => {
+    if (preselectedPack) {
+      const pack = getContentPack(preselectedPack);
+      if (pack) setSelectedPack(pack);
+    }
+    if (preselectedType && VALID_TEST_TYPES.includes(preselectedType as TestType)) {
+      setTestType(preselectedType as TestType);
+    }
+    if (preselectedDuration && VALID_DURATIONS.includes(preselectedDuration as TimedDuration)) {
+      setTimedDuration(preselectedDuration as TimedDuration);
+    }
+  }, [preselectedPack, preselectedType, preselectedDuration]);
 
   const filteredPacks = difficultyFilter === 'all'
     ? CONTENT_PACKS
@@ -58,7 +78,7 @@ export function TestConfigPanel({ onStart }: TestConfigProps) {
   return (
     <div className="space-y-6">
       {/* Difficulty Filter */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap" data-onboard="content">
         {(['all', 'beginner', 'intermediate', 'advanced'] as const).map(d => (
           <Button
             key={d}
@@ -98,7 +118,7 @@ export function TestConfigPanel({ onStart }: TestConfigProps) {
       {selectedPack && (
         <>
           {/* Test Type Selection */}
-          <Card>
+          <Card data-onboard="test-type">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">테스트 유형</CardTitle>
               <CardDescription>연습 방식을 선택하세요</CardDescription>
@@ -130,7 +150,7 @@ export function TestConfigPanel({ onStart }: TestConfigProps) {
               {/* Duration/Count selectors */}
               {testType === 'timed' && (
                 <div className="flex gap-2 mt-4">
-                  {([30, 60, 120] as TimedDuration[]).map(d => (
+                  {VALID_DURATIONS.map(d => (
                     <Button
                       key={d}
                       variant={timedDuration === d ? "default" : "outline"}
@@ -160,7 +180,7 @@ export function TestConfigPanel({ onStart }: TestConfigProps) {
           </Card>
 
           {/* Start Button */}
-          <Button onClick={handleStart} size="lg" className="w-full text-lg">
+          <Button onClick={handleStart} size="lg" className="w-full text-lg" data-onboard="typing">
             연습 시작하기
           </Button>
         </>

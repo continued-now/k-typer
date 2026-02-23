@@ -1,9 +1,28 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Keyboard, TrendingUp, Target, BookOpen, Zap, Globe } from "lucide-react";
+"use client"
+
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Keyboard, TrendingUp, Target, BookOpen, Zap, Globe, Clock, Flame, ArrowRight } from "lucide-react"
+import { useSettingsStore } from "@/store"
+import { getContentPack } from "@/lib/data"
+
+const TEST_TYPE_LABELS: Record<string, string> = {
+  timed: "시간제한",
+  "word-count": "단어 수",
+  zen: "자유 연습",
+  sentence: "문장 연습",
+}
 
 export default function Home() {
+  const { lastPractice, streakCount, lastPracticeDate } = useSettingsStore()
+
+  const isStreakActive = lastPracticeDate === new Date().toDateString() ||
+    lastPracticeDate === new Date(Date.now() - 86400000).toDateString()
+
+  const lastPack = lastPractice ? getContentPack(lastPractice.packId) : null
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -13,7 +32,13 @@ export default function Home() {
             <Keyboard className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">K-Type Coach</h1>
           </div>
-          <nav className="flex gap-2">
+          <nav className="flex items-center gap-2" aria-label="주요 메뉴">
+            {isStreakActive && streakCount > 0 && (
+              <div className="flex items-center gap-1 text-sm text-warning mr-2">
+                <Flame className="h-4 w-4" />
+                <span className="font-bold tabular-nums">{streakCount}</span>
+              </div>
+            )}
             <Link href="/practice">
               <Button variant="ghost" size="sm">연습하기</Button>
             </Link>
@@ -38,9 +63,10 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/practice">
-              <Button size="lg" className="text-lg px-8">
-                빠른 연습 시작
+            <Link href="/practice?pack=common-100&type=timed&duration=60">
+              <Button size="lg" className="text-lg px-8 gap-2">
+                <Clock className="h-5 w-5" />
+                1분 빠른 테스트
               </Button>
             </Link>
             <Link href="/drills">
@@ -50,6 +76,29 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {/* Continue Practicing */}
+        {lastPack && lastPractice && (
+          <Card className="max-w-2xl mx-auto mb-12">
+            <CardContent className="py-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">이어서 연습</p>
+                  <p className="font-semibold">{lastPack.titleKo}</p>
+                  <Badge variant="outline" className="text-xs mt-1">
+                    {TEST_TYPE_LABELS[lastPractice.testType] || lastPractice.testType}
+                  </Badge>
+                </div>
+                <Link href={`/practice?pack=${lastPractice.packId}&type=${lastPractice.testType}`}>
+                  <Button variant="outline" className="gap-1">
+                    계속하기
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mb-16">
