@@ -14,6 +14,8 @@ import { StatsWidgets } from "@/components/features/analytics/StatsWidgets"
 import type { TestConfig } from "./TestConfig"
 import type { ScoreResult, DiffPart, ErrorAnalysis } from "@/types"
 import { RotateCcw, ArrowRight } from "lucide-react"
+import { KoreanKeyboard } from "@/components/features/keyboard/KoreanKeyboard"
+import { useSettingsStore } from "@/store"
 
 interface WordTestProps {
   config: TestConfig;
@@ -72,6 +74,7 @@ export function WordTest({ config, onFinish }: WordTestProps) {
   const [streak, setStreak] = React.useState(0);
   const [maxStreak, setMaxStreak] = React.useState(0);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  const { keyboardGuide } = useSettingsStore();
   const [sentenceIndex, setSentenceIndex] = React.useState(0);
   const sentences = React.useMemo(() => shuffleArray(config.contentPack.items), [config.contentPack.items]);
 
@@ -270,6 +273,13 @@ export function WordTest({ config, onFinish }: WordTestProps) {
           <p className="text-xs text-center text-muted-foreground">
             화면을 클릭하고 타이핑을 시작하세요 &middot; Esc로 종료
           </p>
+          {keyboardGuide && (
+            <KoreanKeyboard
+              nextChar={userInput.length < targetText.length ? targetText[userInput.length] : undefined}
+              showFingerGuide
+              className="mt-4"
+            />
+          )}
         </>
       )}
 
